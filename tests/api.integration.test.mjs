@@ -34,6 +34,18 @@ test('real PostgreSQL customer and administrator journeys',async t=>{
  await t.test('concurrent orders cannot oversell the last unit',async()=>{const p=(await admin.call('/admin/products','POST',productInput('race-'+randomUUID(),1))).data;const results=await Promise.all([a.c.call('/orders','POST',orderInput(p.id)),b.c.call('/orders','POST',orderInput(p.id))]);assert.deepEqual(results.map(r=>r.status).sort(),[201,409]);assert.equal((await guest.call('/products/'+p.id)).data.stock,0);});
  await t.test('admin manages categories and refuses to delete referenced ones',async()=>{const r=await admin.call('/admin/categories','POST',{name:'Test '+randomUUID(),slug:'category-'+randomUUID()});assert.equal(r.status,201);assert.equal((await admin.call('/admin/categories/'+r.data.id,'PUT',{name:'Updated '+randomUUID(),slug:'updated-'+randomUUID()})).status,200);assert.equal((await admin.call('/admin/categories/'+r.data.id,'DELETE')).status,204);assert.equal((await admin.call('/admin/categories/1','DELETE')).status,409);});
  await t.test('image uploads require admin and valid decoded images',async()=>{const fake=new FormData();fake.set('file',new Blob(['not an image'],{type:'image/png'}),'test.png');assert.equal((await admin.call('/admin/images','POST',fake)).status,400);assert.equal((await a.c.call('/admin/images','POST',fake)).status,403);});
+ await t.test('valid product image is stored and publicly retrievable',async()=>{
+ const data=new FormData();
+ data.set('file',new Blob([Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAIAAACQd1PeAAAADElEQVR4nGNocFAAAAIkAOGrWWInAAAAAElFTkSuQmCC','base64')],{type:'image/png'}),'coffee.png');
+ const upload=await admin.call('/admin/images','POST',data);
+ assert.equal(upload.status,201);
+ assert.match(upload.data.url,/^\/api\/v1\/media\/[a-f0-9-]+\.png$/);
+ const image=await fetch(base+upload.data.url);
+ assert.equal(image.status,200);
+ assert.equal(image.headers.get('content-type'),'image/png');
+ const bytes=new Uint8Array(await image.arrayBuffer());
+ assert.deepEqual(Array.from(bytes.slice(0,8)),[137,80,78,71,13,10,26,10]);
+ });
  await t.test('deactivation removes products from public catalog',async()=>{assert.equal((await admin.call('/admin/products/'+product.id,'DELETE')).status,200);assert.equal((await guest.call('/products/'+product.id)).status,404);});
  await t.test('profile updates and password change invalidate existing sessions',async()=>{assert.equal((await a.c.call('/users/me','PUT',{firstName:'Updated',lastName:'Tester'})).status,200);assert.equal((await a.c.call('/users/me')).data.firstName,'Updated');const next='New-test-password-'+randomUUID();assert.equal((await a.c.call('/users/me/password','PUT',{currentPassword:password,password:next,confirmPassword:next})).status,204);assert.equal((await a.c.call('/users/me')).status,401);});
  await t.test('logout invalidates session and KPI values come from real records',async()=>{const stats=await admin.call('/admin/stats');assert.equal(stats.status,200);assert.ok(stats.data.totalOrders>=2);assert.ok(stats.data.totalProducts>=8);assert.equal((await b.c.call('/auth/logout','POST')).status,204);assert.equal((await b.c.call('/users/me')).status,401);});

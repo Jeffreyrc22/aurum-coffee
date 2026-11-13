@@ -82,6 +82,8 @@ class SecurityConfig {
             "/api/v1/auth/login"
           )
           .permitAll()
+          .requestMatchers(org.springframework.http.HttpMethod.GET, "/", "/shop", "/shop/*", "/our-story", "/contact", "/login", "/register", "/cart", "/checkout", "/account", "/account/orders", "/admin", "/admin/*", "/admin/*/*", "/index.html", "/assets/**", "/images/**", "/favicon.ico", "/*.js", "/*.css", "/*.svg", "/*.woff2")
+          .permitAll()
           .anyRequest()
           .authenticated()
       )

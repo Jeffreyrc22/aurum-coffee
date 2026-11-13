@@ -13,9 +13,11 @@ import org.springframework.web.multipart.MultipartFile;
 class MediaController {
 
   final Path root;
+  final org.springframework.jdbc.core.JdbcTemplate jdbc;
 
-  MediaController(@Value("${app.uploads}") String dir)
+  MediaController(@Value("${app.uploads}") String dir, org.springframework.jdbc.core.JdbcTemplate jdbc)
     throws java.io.IOException {
+    this.jdbc = jdbc;
     root = Path.of(dir).toAbsolutePath().normalize();
     Files.createDirectories(root);
   }
@@ -47,7 +49,9 @@ class MediaController {
         var image = reader.read(0);
         String ext = file.getContentType().equals("image/png") ? "png" : "jpg";
         String name = UUID.randomUUID() + "." + ext;
-        ImageIO.write(image, ext, root.resolve(name).toFile());
+        var bytes = new java.io.ByteArrayOutputStream();
+        ImageIO.write(image, ext, bytes);
+        jdbc.update("INSERT INTO product_media (name, content) VALUES (?, ?)", name, bytes.toByteArray());
         return Map.of("url", "/api/v1/media/" + name);
       } finally {
         reader.dispose();
@@ -60,6 +64,14 @@ class MediaController {
     if (
       !name.matches("[a-f0-9-]{36}\\.(png|jpg)")
     ) throw CommerceService.missing();
+    var stored = jdbc.query("SELECT content FROM product_media WHERE name = ?", (rs, row) -> rs.getBytes(1), name);
+    if (!stored.isEmpty()) {
+      return ResponseEntity.ok()
+        .contentType(name.endsWith("png") ? MediaType.IMAGE_PNG : MediaType.IMAGE_JPEG)
+        .cacheControl(CacheControl.maxAge(java.time.Duration.ofDays(7)))
+        .body(new ByteArrayResource(stored.getFirst()));
+    }
+    // Existing local uploads remain readable while new files use persistent storage.
     Path path = root.resolve(name).normalize();
     if (
       !path.startsWith(root) || !Files.isRegularFile(path)
