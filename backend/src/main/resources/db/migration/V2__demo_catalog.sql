@@ -1,0 +1,9 @@
+INSERT INTO categories(name,slug) VALUES ('Single Origin','single-origin'),('Signature Blends','signature-blends'),('Reserve Collection','reserve-collection');
+INSERT INTO products(name,slug,short_description,description,price,category_id,origin,roast_level,weight,stock,main_image,featured) VALUES
+('Colombian Supremo','colombian-supremo','Chocolate · Caramel · Citrus','Demo product. A fictional Colombian coffee with a balanced profile, a rounded body and a gentle citrus finish. Created for this portfolio store.',18,1,'Colombia','Medium',250,40,'/images/coffee-cream.svg',true),
+('Sierra Nevada Reserve','sierra-nevada-reserve','Cacao · Almond · Honey','Demo product. A fictional reserve inspired by the Sierra Nevada region, with a warm honey character and a soft finish.',24,3,'Colombia','Medium',250,24,'/images/coffee-green.svg',true),
+('Huila Bourbon','huila-bourbon','Red berries · Brown sugar · Floral','Demo product. A fictional Huila Bourbon profile with bright fruit notes and delicate sweetness. No origin certification is claimed.',22,1,'Colombia','Light',250,30,'/images/coffee-rose.svg',true),
+('Nariño Specialty','narino-specialty','Orange · Panela · Stone fruit','Demo product. A fictional highland coffee profile for a clean, fruit-forward cup.',21,1,'Colombia','Light',250,18,'/images/coffee-cream.svg',false),
+('Antioquia Dark Roast','antioquia-dark-roast','Dark chocolate · Walnut · Spice','Demo product. A fictional rich dark roast with a full body and a lingering finish.',19,1,'Colombia','Dark',500,8,'/images/coffee-brown.svg',false),
+('Golden Espresso Blend','golden-espresso-blend','Hazelnut · Toffee · Cocoa','Demo product. A fictional espresso blend developed for a rounded, comforting cup.',20,2,'Colombia & Brazil','Medium-dark',250,35,'/images/coffee-brown.svg',true);
+INSERT INTO inventory_movements(product_id,delta,reason) SELECT id,stock,'DEMO_INITIAL_STOCK' FROM products;

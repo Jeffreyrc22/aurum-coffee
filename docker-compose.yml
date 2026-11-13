@@ -1,0 +1,45 @@
+services:
+  database:
+    image: postgres:17-alpine
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-aurum}
+      POSTGRES_USER: ${POSTGRES_USER:-aurum}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in .env}
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: [CMD-SHELL, 'pg_isready -U "$${POSTGRES_USER}" -d "$${POSTGRES_DB}"']
+      interval: 5s
+      timeout: 5s
+      retries: 10
+  backend:
+    build: ./backend
+    environment:
+      DATABASE_URL: jdbc:postgresql://database:5432/${POSTGRES_DB:-aurum}
+      POSTGRES_USER: ${POSTGRES_USER:-aurum}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in .env}
+      ADMIN_EMAIL: ${ADMIN_EMAIL:-}
+      ADMIN_PASSWORD: ${ADMIN_PASSWORD:-}
+      SESSION_SECURE: ${SESSION_SECURE:-false}
+      UPLOAD_DIR: /uploads
+    volumes:
+      - product-images:/uploads
+    depends_on:
+      database:
+        condition: service_healthy
+    healthcheck:
+      test: [CMD, wget, -q, --spider, http://localhost:8080/actuator/health]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 40s
+  frontend:
+    build: ./frontend
+    ports:
+      - '127.0.0.1:${WEB_PORT:-8088}:80'
+    depends_on:
+      backend:
+        condition: service_healthy
+volumes:
+  postgres-data:
+  product-images:
