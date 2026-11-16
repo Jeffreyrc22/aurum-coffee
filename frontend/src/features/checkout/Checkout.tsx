@@ -57,11 +57,11 @@ export function CartPage() {
                 <div className="cart-row" key={item.productId}>
                   {p && <img src={p.mainImage} alt={p.name} />}
                   <div>
-                    <h3>{p?.name || "Unavailable product"}</h3>
+                    <h3>{p?.name || (qs[i].isPending ? "Loading coffee…" : "Unavailable product")}</h3>
                     <p>
                       {p
                         ? `${p.weight}g · ${p.roastLevel}`
-                        : "Remove this item to continue."}
+                        : qs[i].isPending ? "Checking current price and availability…" : "Remove this item to continue."}
                     </p>
                     {p && p.stock < item.quantity && (
                       <p className="field-error">Only {p.stock} available.</p>
@@ -111,7 +111,7 @@ export function CartPage() {
             <h2>Order summary</h2>
             <p>
               <span>Subtotal</span>
-              <strong>{money(total)}</strong>
+              <strong>{loading ? "—" : money(total)}</strong>
             </p>
             <p>
               <span>Demo shipping</span>
@@ -119,7 +119,7 @@ export function CartPage() {
             </p>
             <div className="summary-total">
               <span>Total</span>
-              <strong>{money(total)}</strong>
+              <strong>{loading ? "—" : money(total)}</strong>
             </div>
             {loading ? (
               <Loading />
@@ -351,7 +351,7 @@ export function Checkout() {
           ))}
           <div className="summary-total">
             <span>Total</span>
-            <strong>{money(total)}</strong>
+            <strong>{loading ? "—" : money(total)}</strong>
           </div>
           {invalid && (
             <p className="notice error">
@@ -367,3 +367,4 @@ export function Checkout() {
     </section>
   );
 }
+
