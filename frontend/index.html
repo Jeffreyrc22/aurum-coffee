@@ -1,2 +1,26 @@
-<!doctype html><html lang="en"><head><meta charset="UTF-8"/><meta name="viewport" content="width=device-width,initial-scale=1"/><meta name="theme-color" content="#2B1D17"/><title>AURUM Coffee — The art of exceptional coffee</title><meta name="description" content="Discover distinctive coffees, thoughtful roasts and a richer daily ritual with AURUM Coffee."/><link rel="icon" href="/images/mark.svg"/></head><body><div id="root"></div><script type="module" src="/src/main.tsx"></script></body></html>
+<!doctype html><html lang="en"><head><meta charset="UTF-8"/><meta name="viewport" content="width=device-width,initial-scale=1"/><meta name="theme-color" content="#2B1D17"/><title>AURUM Coffee — The art of exceptional coffee</title><meta name="description" content="Discover distinctive coffees, thoughtful roasts and a richer daily ritual with AURUM Coffee."/><link rel="icon" href="/images/mark.svg"/><script>(() => {
+  let banner, delayed = false;
+  const show = (message, retry = false) => {
+    if (!document.body) return;
+    if (!banner) {
+      banner = document.createElement('div'); banner.setAttribute('role', 'status');
+      Object.assign(banner.style, {position:'fixed',bottom:'18px',left:'50%',transform:'translateX(-50%)',zIndex:'9999',maxWidth:'calc(100% - 32px)',width:'520px',padding:'14px 18px',borderRadius:'12px',background:'#182721',color:'#eef7f0',boxShadow:'0 8px 30px #0004',font:'14px/1.5 system-ui',border:'1px solid #749c82'});
+      document.body.append(banner);
+    }
+    banner.textContent = message;
+    if (retry) {const button=document.createElement('button');button.textContent='Retry connection';button.style.cssText='margin-left:10px;padding:7px 10px;border-radius:7px;background:#c1e4c9;color:#14251b;border:0;cursor:pointer';button.onclick=()=>location.reload();banner.append(button);}
+  };
+  const timer=setTimeout(()=>{delayed=true;show('Connecting to the server. The free service may take a moment to wake up; your page is ready.');},1500);
+  window.backendReady = (async () => {
+    const deadline=Date.now()+240000;
+    while(Date.now()<deadline){
+      try {const response=await fetch('/actuator/health',{cache:'no-store',signal:AbortSignal.timeout(25000)});const data=await response.json();if(response.ok&&data.status==='UP'){clearTimeout(timer);if(delayed){show('Connected. Loading your data…');setTimeout(()=>banner?.remove(),2500);}return;}}catch{}
+      await new Promise(resolve=>setTimeout(resolve,3000));
+    }
+    clearTimeout(timer);show('The server is taking longer than expected. Please retry the connection.',true);
+    throw new Error('Server unavailable. Please retry the connection.');
+  })();
+  window.backendReady.catch(()=>{});
+})();
+</script></head><body><div id="root"></div><script type="module" src="/src/main.tsx"></script></body></html>
 

@@ -10,6 +10,7 @@ export async function api<T>(
   path: string,
   options: RequestInit = {},
 ): Promise<T> {
+  await (window as Window & { backendReady?: Promise<void> }).backendReady;
   const method = options.method || "GET";
   const headers = new Headers(options.headers);
   if (!["GET", "HEAD", "OPTIONS"].includes(method)) {
